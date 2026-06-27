@@ -33,7 +33,8 @@ func (c *ClientConn) Close() error {
 }
 
 // Dial connects to libravdbd and returns a client with auth and tenant interceptors.
-func Dial(addr string, tlsEnabled bool, timeout time.Duration, tenantKey string) (*ClientConn, ipcv1.LibravDBClient, error) {
+// extraOpts allows tests to inject custom dialers (e.g., bufconn).
+func Dial(addr string, tlsEnabled bool, timeout time.Duration, tenantKey string, extraOpts ...grpc.DialOption) (*ClientConn, ipcv1.LibravDBClient, error) {
 	target, dialer := parseAddr(addr)
 
 	opts := []grpc.DialOption{
@@ -41,6 +42,7 @@ func Dial(addr string, tlsEnabled bool, timeout time.Duration, tenantKey string)
 			return dialer(ctx, target)
 		}),
 	}
+	opts = append(opts, extraOpts...)
 
 	if tlsEnabled {
 		return nil, nil, fmt.Errorf("TLS not yet implemented — use Unix socket")
