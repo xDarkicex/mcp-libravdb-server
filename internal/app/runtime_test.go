@@ -341,6 +341,34 @@ func TestRunStdio_ConfigError(t *testing.T) {
 	}
 }
 
+func TestRunHTTP_PortInUse(t *testing.T) {
+	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+
+	sock, cleanup := fakeServer(t)
+	defer cleanup()
+
+	// Bind the port first so r.Start fails immediately
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer l.Close()
+
+	cfg := &Config{
+		BackendAddr:    sock, BackendTLS: false, BackendTimeout: 5 * time.Second,
+		LogLevel: "error", TenantKey: DefaultTenantKey, Shared: true,
+		HTTPHost: "127.0.0.1", HTTPPort: l.Addr().(*net.TCPAddr).Port,
+	}
+
+	// RunHTTP should fail immediately — port in use
+	err = RunHTTP(cfg)
+	if err == nil {
+		t.Fatal("expected error: port in use")
+	}
+	t.Logf("RunHTTP port-in-use returned: %v", err)
+}
+
 func TestRunHTTP_ConfigError(t *testing.T) {
 	cfg := &Config{
 		BackendAddr:    "unix:///nonexistent",
