@@ -1,5 +1,9 @@
 version: "2"
 
+formatters:
+  enable:
+    - gofmt
+
 linters:
   enable:
     - errcheck
@@ -9,9 +13,6 @@ linters:
     - staticcheck
     - unused
     - revive
-  formatters:
-    enable:
-      - gofmt
   settings:
     revive:
       rules:
