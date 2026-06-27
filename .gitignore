@@ -36,6 +36,10 @@ coverage/
 .env.local
 .env.*.local
 
+# Go workspace (local dev only)
+go.work
+go.work.sum
+
 # Logs
 *.log
 logs/
