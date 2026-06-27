@@ -40,6 +40,11 @@ func TestSSEWriter_Flush(t *testing.T) {
 	w.Flush()
 }
 
+func TestSSEWriter_Flush_NoPanic(t *testing.T) {
+	w := NewSSEWriter(nil)
+	w.Flush() // should not panic even with nil conn
+}
+
 func TestSSEWriter_ImplementsFlusher(t *testing.T) {
 	w := NewSSEWriter(nil)
 	var _ http.Flusher = w

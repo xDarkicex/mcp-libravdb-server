@@ -2,12 +2,18 @@ package grpc
 
 import (
 	"context"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/test/bufconn"
+
+	ipcv1 "github.com/xDarkicex/libravdb-contracts/libravdb/ipc/v1"
 )
 
 func TestParseAddr_Unix(t *testing.T) {
@@ -76,9 +82,81 @@ func TestTenantKeyInterceptor(t *testing.T) {
 	interceptor := tenantKeyInterceptor("test-tenant")
 	err := interceptor(context.Background(), "/test.Method", nil, nil, nil,
 		func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
+			md, ok := metadata.FromOutgoingContext(ctx)
+			if !ok {
+				t.Fatal("expected metadata in context")
+			}
+			if md.Get("libravdb-tenant-key")[0] != "test-tenant" {
+				t.Fatal("tenant key not set")
+			}
 			return nil
 		})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestHMACAuthInterceptor(t *testing.T) {
+	os.Setenv("LIBRAVDB_AUTH_SECRET", "test-secret")
+	defer os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+
+	interceptor := hmacAuthInterceptor("test-secret")
+	err := interceptor(context.Background(), "/test.Method", nil, nil, nil,
+		func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
+			md, ok := metadata.FromOutgoingContext(ctx)
+			if !ok {
+				t.Fatal("expected metadata")
+			}
+			if len(md.Get("x-libravdb-nonce")) == 0 {
+				t.Fatal("nonce not set")
+			}
+			if len(md.Get("x-libravdb-auth")) == 0 {
+				t.Fatal("auth signature not set")
+			}
+			return nil
+		})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestDial_Bufconn(t *testing.T) {
+	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+
+	listener := bufconn.Listen(1024 * 1024)
+	server := grpc.NewServer()
+	ipcv1.RegisterLibravDBServer(server, &ipcv1.UnimplementedLibravDBServer{})
+	go func() { _ = server.Serve(listener) }()
+	defer server.Stop()
+
+	conn, client, err := Dial("passthrough:///bufnet", false, 5*time.Second, "test-tenant",
+		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+			return listener.Dial()
+		}),
+	)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	if conn == nil {
+		t.Fatal("expected non-nil conn")
+	}
+	if client == nil {
+		t.Fatal("expected non-nil client")
+	}
+	conn.Close()
+}
+
+func TestDial_TLSNotImplemented(t *testing.T) {
+	_, _, err := Dial("unix:///tmp/test.sock", true, 5*time.Second, "test")
+	if err == nil {
+		t.Fatal("expected TLS error")
+	}
+}
+
+func TestClientConn_Close(t *testing.T) {
+	cc := &ClientConn{ClientConn: nil}
+	if err := cc.Close(); err != nil {
+		t.Fatal("Close on nil should not error")
 	}
 }
