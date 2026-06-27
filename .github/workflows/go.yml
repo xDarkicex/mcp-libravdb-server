@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -43,10 +46,34 @@ jobs:
           path: libravdb-contracts
       - uses: actions/setup-go@v5
         with: { go-version: "1.25" }
-      - working-directory: mcp-libravdb-server
-        run: go test -race -coverprofile=coverage.out ./...
-      - working-directory: mcp-libravdb-server
-        run: go tool cover -func=coverage.out
+      - name: Run tests with coverage
+        working-directory: mcp-libravdb-server
+        run: |
+          go test -v -race -coverprofile=coverage.out --coverpkg=$(go list ./... | grep -v testutil | tr '\n' ',') ./...
+      - name: Generate coverage badge
+        working-directory: mcp-libravdb-server
+        run: |
+          COV=$(go tool cover -func=coverage.out | grep '^total:' | awk '{print substr($3, 1, length($3)-1)}')
+          if [ -z "$COV" ]; then COV=0; fi
+          if [ "${COV%.*}" -ge 90 ]; then COLOR=brightgreen
+          elif [ "${COV%.*}" -ge 80 ]; then COLOR=green
+          elif [ "${COV%.*}" -ge 70 ]; then COLOR=yellowgreen
+          elif [ "${COV%.*}" -ge 60 ]; then COLOR=yellow
+          else COLOR=red
+          fi
+          cat > coverage.json <<JSON
+          {"schemaVersion":1,"label":"coverage","message":"${COV}%","color":"${COLOR}","cacheSeconds":3600}
+          JSON
+      - name: Publish coverage badge
+        if: github.ref == 'refs/heads/main'
+        working-directory: mcp-libravdb-server
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BLOB=$(git hash-object -w coverage.json)
+          TREE=$(printf '100644 blob %s\tcoverage.json\n' "$BLOB" | git mktree)
+          COMMIT=$(git commit-tree "$TREE" -m "Update coverage badge")
+          git push --force origin "$COMMIT":refs/heads/coverage
 
   build:
     runs-on: ubuntu-latest
