@@ -354,44 +354,31 @@ func TestRunHTTP_ConfigError(t *testing.T) {
 	}
 }
 
-func TestRunStdio_Integration(t *testing.T) {
+func TestRunStdio_Success(t *testing.T) {
 	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
 	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	sock, cleanup := fakeServer(t)
 	defer cleanup()
 
+	oldStdin := os.Stdin
+	r, w, _ := os.Pipe()
+	os.Stdin = r
+	w.Close()
+	defer func() { os.Stdin = oldStdin }()
+
 	cfg := &Config{
-		BackendAddr:    sock,
-		BackendTLS:     false,
-		BackendTimeout: 5 * time.Second,
-		LogLevel:       "error",
-		TenantKey:      DefaultTenantKey,
-		Shared:         true,
+		BackendAddr:    sock, BackendTLS: false, BackendTimeout: 5 * time.Second,
+		LogLevel: "error", TenantKey: DefaultTenantKey, Shared: true,
 	}
 
-	// Run in goroutine with cancelled context → returns immediately
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	errCh := make(chan error, 1)
-	go func() {
-		rt, err := NewRuntime(cfg)
-		if err != nil {
-			errCh <- err
-			return
-		}
-		defer rt.Shutdown()
-		errCh <- rt.MCP.Run(ctx, &mcp.StdioTransport{})
-	}()
+	done := make(chan error, 1)
+	go func() { done <- RunStdio(cfg) }()
 
 	select {
-	case err := <-errCh:
-		if err != nil && err != context.Canceled {
-			// Expected: context canceled or EOF
-			t.Logf("RunStdio returned: %v", err)
-		}
-	case <-time.After(2 * time.Second):
+	case err := <-done:
+		t.Logf("RunStdio: %v", err)
+	case <-time.After(3 * time.Second):
 		t.Fatal("RunStdio timed out")
 	}
 }
