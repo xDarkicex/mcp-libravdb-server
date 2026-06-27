@@ -4,7 +4,7 @@
 [![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8.svg?style=flat-square)](https://go.dev/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/xDarkicex/mcp-libravdb-server)](https://goreportcard.com/report/github.com/xDarkicex/mcp-libravdb-server)
 [![Test](https://img.shields.io/github/actions/workflow/status/xDarkicex/mcp-libravdb-server/go.yml?branch=main&style=flat-square)](https://github.com/xDarkicex/mcp-libravdb-server/actions/workflows/go.yml)
-[![Coverage](https://img.shields.io/endpoint?style=flat-square&url=https://raw.githubusercontent.com/xDarkicex/mcp-libravdb-server/coverage/coverage.json)](https://github.com/xDarkicex/mcp-libravdb-server/actions/workflows/go.yml)
+[![Coverage](https://img.shields.io/endpoint?style=flat-square&url=https://raw.githubusercontent.com/xDarkicex/mcp-libravdb-server/coverage/coverage.json?v=86a262f)](https://github.com/xDarkicex/mcp-libravdb-server/actions/workflows/go.yml)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 
 ---
