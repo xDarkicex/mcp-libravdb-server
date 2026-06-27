@@ -25,35 +25,45 @@ type FakeBackend struct {
 	StatusResponse  *ipcv1.MemoryStatusResponse
 	GraphResponse   *ipcv1.ExpandSummaryResponse
 
+	// Error, when set, causes all RPCs to return this error.
+	Error error
+
 	LastSearch   *ipcv1.SearchTextRequest
 	LastInsert   *ipcv1.InsertTextRequest
 	LastDelete   *ipcv1.DeleteRequest
 }
+
+func (f *FakeBackend) err() error { return f.Error }
 
 func (f *FakeBackend) Health(ctx context.Context, req *ipcv1.HealthRequest) (*ipcv1.HealthResponse, error) {
 	return &ipcv1.HealthResponse{Ok: f.HealthOK}, nil
 }
 
 func (f *FakeBackend) SearchText(ctx context.Context, req *ipcv1.SearchTextRequest) (*ipcv1.SearchTextResponse, error) {
+	if f.Error != nil { return nil, f.Error }
 	f.LastSearch = req
 	return &ipcv1.SearchTextResponse{Results: f.SearchResults}, nil
 }
 
 func (f *FakeBackend) SearchTextCollections(ctx context.Context, req *ipcv1.SearchTextCollectionsRequest) (*ipcv1.SearchTextResponse, error) {
+	if f.Error != nil { return nil, f.Error }
 	return &ipcv1.SearchTextResponse{Results: f.SearchResults}, nil
 }
 
 func (f *FakeBackend) InsertText(ctx context.Context, req *ipcv1.InsertTextRequest) (*ipcv1.InsertTextResponse, error) {
+	if f.Error != nil { return nil, f.Error }
 	f.LastInsert = req
 	return &ipcv1.InsertTextResponse{Ok: f.InsertOK}, nil
 }
 
 func (f *FakeBackend) Delete(ctx context.Context, req *ipcv1.DeleteRequest) (*ipcv1.DeleteResponse, error) {
+	if f.Error != nil { return nil, f.Error }
 	f.LastDelete = req
 	return &ipcv1.DeleteResponse{Ok: f.DeleteOK}, nil
 }
 
 func (f *FakeBackend) GatingScalar(ctx context.Context, req *ipcv1.GatingScalarRequest) (*ipcv1.GatingScalarResponse, error) {
+	if f.Error != nil { return nil, f.Error }
 	if f.GatingResponse != nil {
 		return f.GatingResponse, nil
 	}
@@ -61,6 +71,7 @@ func (f *FakeBackend) GatingScalar(ctx context.Context, req *ipcv1.GatingScalarR
 }
 
 func (f *FakeBackend) CognitiveMetrics(ctx context.Context, req *ipcv1.CognitiveMetricsRequest) (*ipcv1.CognitiveMetricsResponse, error) {
+	if f.Error != nil { return nil, f.Error }
 	if f.MetricsResponse != nil {
 		return f.MetricsResponse, nil
 	}
@@ -74,6 +85,7 @@ func (f *FakeBackend) CognitiveMetrics(ctx context.Context, req *ipcv1.Cognitive
 }
 
 func (f *FakeBackend) Status(ctx context.Context, req *ipcv1.MemoryStatusRequest) (*ipcv1.MemoryStatusResponse, error) {
+	if f.Error != nil { return nil, f.Error }
 	if f.StatusResponse != nil {
 		return f.StatusResponse, nil
 	}
@@ -84,6 +96,7 @@ func (f *FakeBackend) Status(ctx context.Context, req *ipcv1.MemoryStatusRequest
 }
 
 func (f *FakeBackend) ExpandSummary(ctx context.Context, req *ipcv1.ExpandSummaryRequest) (*ipcv1.ExpandSummaryResponse, error) {
+	if f.Error != nil { return nil, f.Error }
 	if f.GraphResponse != nil {
 		return f.GraphResponse, nil
 	}

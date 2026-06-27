@@ -46,6 +46,19 @@ func TestPredict_NoResults(t *testing.T) {
 	assert.True(t, result.IsError)
 }
 
+func TestPredict_BackendError(t *testing.T) {
+	fake, client, cleanup := setupTest(t)
+	defer cleanup()
+	fake.Error = assert.AnError
+
+	session := startServer(t, client)
+	result, err := session.CallTool(context.Background(), &mcp.CallToolParams{
+		Name: "memory.predict", Arguments: map[string]any{"query": "test"},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.IsError)
+}
+
 func TestPredict_Degraded(t *testing.T) {
 	_, _, cleanup := setupTest(t)
 	defer cleanup()

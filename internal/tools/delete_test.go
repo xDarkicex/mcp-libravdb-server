@@ -29,6 +29,19 @@ func TestDelete_OK(t *testing.T) {
 	assert.Equal(t, "test", fake.LastDelete.Collection)
 }
 
+func TestDelete_BackendError(t *testing.T) {
+	fake, client, cleanup := setupTest(t)
+	defer cleanup()
+	fake.Error = assert.AnError
+
+	session := startServer(t, client)
+	result, err := session.CallTool(context.Background(), &mcp.CallToolParams{
+		Name: "memory.delete", Arguments: map[string]any{"collection": "test", "id": "any"},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.IsError)
+}
+
 func TestDelete_Degraded(t *testing.T) {
 	_, _, cleanup := setupTest(t)
 	defer cleanup()

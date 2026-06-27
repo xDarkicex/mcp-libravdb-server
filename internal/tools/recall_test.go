@@ -48,6 +48,19 @@ func TestRecall_KindFilter(t *testing.T) {
 	assert.False(t, result.IsError)
 }
 
+func TestRecall_BackendError(t *testing.T) {
+	fake, client, cleanup := setupTest(t)
+	defer cleanup()
+	fake.Error = assert.AnError
+
+	session := startServer(t, client)
+	result, err := session.CallTool(context.Background(), &mcp.CallToolParams{
+		Name: "memory.recall", Arguments: map[string]any{"query": "test"},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.IsError)
+}
+
 func TestRecall_Degraded(t *testing.T) {
 	_, _, cleanup := setupTest(t)
 	defer cleanup()

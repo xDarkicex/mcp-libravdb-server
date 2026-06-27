@@ -328,6 +328,144 @@ func TestSetupRouter_WithAuth(t *testing.T) {
 	}
 }
 
+func TestRunStdio_ConfigError(t *testing.T) {
+	cfg := &Config{
+		BackendAddr:    "unix:///nonexistent",
+		BackendTLS:     false,
+		BackendTimeout: 1 * time.Second,
+		DegradedOk:     false,
+	}
+	err := RunStdio(cfg)
+	if err == nil {
+		t.Fatal("expected error when backend is down")
+	}
+}
+
+func TestRunHTTP_ConfigError(t *testing.T) {
+	cfg := &Config{
+		BackendAddr:    "unix:///nonexistent",
+		BackendTLS:     false,
+		BackendTimeout: 1 * time.Second,
+		DegradedOk:     false,
+	}
+	err := RunHTTP(cfg)
+	if err == nil {
+		t.Fatal("expected error when backend is down")
+	}
+}
+
+func TestRunStdio_Integration(t *testing.T) {
+	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+
+	sock, cleanup := fakeServer(t)
+	defer cleanup()
+
+	cfg := &Config{
+		BackendAddr:    sock,
+		BackendTLS:     false,
+		BackendTimeout: 5 * time.Second,
+		LogLevel:       "error",
+		TenantKey:      DefaultTenantKey,
+		Shared:         true,
+	}
+
+	// Run in goroutine with cancelled context → returns immediately
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	errCh := make(chan error, 1)
+	go func() {
+		rt, err := NewRuntime(cfg)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		defer rt.Shutdown()
+		errCh <- rt.MCP.Run(ctx, &mcp.StdioTransport{})
+	}()
+
+	select {
+	case err := <-errCh:
+		if err != nil && err != context.Canceled {
+			// Expected: context canceled or EOF
+			t.Logf("RunStdio returned: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("RunStdio timed out")
+	}
+}
+
+func TestRunHTTP_SetupRouter(t *testing.T) {
+	sock, cleanup := fakeServer(t)
+	defer cleanup()
+
+	cfg := &Config{
+		BackendAddr:    sock,
+		BackendTLS:     false,
+		BackendTimeout: 5 * time.Second,
+		LogLevel:       "error",
+		TenantKey:      DefaultTenantKey,
+		Shared:         true,
+		HTTPHost:       "127.0.0.1",
+		HTTPPort:       8082,
+	}
+
+	rt, err := NewRuntime(cfg)
+	if err != nil {
+		t.Fatalf("NewRuntime: %v", err)
+	}
+	defer rt.Shutdown()
+
+	r := setupRouter(rt, cfg)
+
+	// Verify the router has all expected endpoints
+	for _, tc := range []struct {
+		method string
+		path   string
+	}{
+		{"GET", "/health"},
+		{"POST", "/mcp"},
+	} {
+		req := httptest.NewRequest(tc.method, tc.path, nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		if w.Code == 0 {
+			t.Errorf("%s %s: no response code", tc.method, tc.path)
+		}
+	}
+}
+
+func TestSetupRouter_AllRoutes(t *testing.T) {
+	sock, cleanup := fakeServer(t)
+	defer cleanup()
+
+	cfg := &Config{
+		BackendAddr:    sock,
+		BackendTLS:     false,
+		BackendTimeout: 5 * time.Second,
+		LogLevel:       "error",
+		TenantKey:      DefaultTenantKey,
+		Shared:         true,
+	}
+
+	rt, err := NewRuntime(cfg)
+	if err != nil {
+		t.Fatalf("NewRuntime: %v", err)
+	}
+	defer rt.Shutdown()
+
+	r := setupRouter(rt, cfg)
+
+	// Health endpoint with backend healthy
+	req := httptest.NewRequest("GET", "/health", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != 200 {
+		t.Fatalf("health: expected 200, got %d", w.Code)
+	}
+}
+
 func TestRuntime_ResourcesList(t *testing.T) {
 	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
 	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")

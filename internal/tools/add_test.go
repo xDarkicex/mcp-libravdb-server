@@ -49,6 +49,19 @@ func TestAdd_ExplicitID(t *testing.T) {
 	assert.Equal(t, "my-custom-id", fake.LastInsert.Id)
 }
 
+func TestAdd_BackendError(t *testing.T) {
+	fake, client, cleanup := setupTest(t)
+	defer cleanup()
+	fake.Error = assert.AnError
+
+	session := startServer(t, client)
+	result, err := session.CallTool(context.Background(), &mcp.CallToolParams{
+		Name: "memory.add", Arguments: map[string]any{"collection": "test", "text": "content"},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.IsError)
+}
+
 func TestAdd_Degraded(t *testing.T) {
 	_, _, cleanup := setupTest(t)
 	defer cleanup()
