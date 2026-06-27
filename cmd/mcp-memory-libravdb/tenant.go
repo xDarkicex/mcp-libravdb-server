@@ -29,7 +29,7 @@ var tenantListCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("daemon connection failed: %w", err)
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.BackendTimeout)
 		defer cancel()
@@ -94,7 +94,7 @@ var tenantEvictCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("daemon connection failed: %w", err)
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.BackendTimeout)
 		defer cancel()
@@ -128,7 +128,7 @@ var tenantInspectCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("daemon connection failed: %w", err)
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.BackendTimeout)
 		defer cancel()

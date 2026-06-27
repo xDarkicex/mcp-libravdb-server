@@ -192,7 +192,7 @@ func registerSSE(r *nanite.Router, rt *Runtime) {
 			rt.Logger.Error("SSE connection failed", "err", err)
 			return
 		}
-		defer ss.Close()
+		defer func() { _ = ss.Close() }()
 		<-c.Request.Context().Done()
 	})
 }

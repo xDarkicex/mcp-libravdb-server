@@ -59,10 +59,7 @@ func Dial(addr string, tlsEnabled bool, timeout time.Duration, tenantKey string)
 	// Retry interceptor: 3 attempts, 500ms base jittered backoff on transient errors
 	opts = append(opts, grpc.WithUnaryInterceptor(RetryInterceptor(3, 500*time.Millisecond)))
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	conn, err := grpc.DialContext(ctx, target, opts...)
+	conn, err := grpc.NewClient("passthrough:///"+target, opts...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("dial %s: %w", addr, err)
 	}

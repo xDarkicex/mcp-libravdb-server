@@ -116,12 +116,10 @@ func NewFakeBackend(t *testing.T) (*FakeBackend, ipcv1.LibravDBClient, func()) {
 	ipcv1.RegisterLibravDBServer(server, fake)
 
 	go func() {
-		if err := server.Serve(listener); err != nil {
-			// server stopped
-		}
+		_ = server.Serve(listener)
 	}()
 
-	conn, err := grpc.Dial("bufnet",
+	conn, err := grpc.NewClient("passthrough:///bufnet",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
 			return listener.Dial()
@@ -132,7 +130,7 @@ func NewFakeBackend(t *testing.T) (*FakeBackend, ipcv1.LibravDBClient, func()) {
 	}
 
 	cleanup := func() {
-		conn.Close()
+		_ = conn.Close()
 		server.Stop()
 	}
 

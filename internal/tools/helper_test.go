@@ -38,9 +38,7 @@ func startServer(t *testing.T, grpcClient ipcv1.LibravDBClient) *mcp.ClientSessi
 
 	clientTrans, serverTrans := mcp.NewInMemoryTransports()
 	go func() {
-		if _, err := server.Connect(t.Context(), serverTrans, nil); err != nil {
-			// connection closed after test
-		}
+		_, _ = server.Connect(t.Context(), serverTrans, nil)
 	}()
 
 	mcpClient := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.0.0"}, nil)
@@ -48,6 +46,6 @@ func startServer(t *testing.T, grpcClient ipcv1.LibravDBClient) *mcp.ClientSessi
 	if err != nil {
 		t.Fatalf("connect: %v", err)
 	}
-	t.Cleanup(func() { session.Close() })
+	t.Cleanup(func() { _ = session.Close() })
 	return session
 }
