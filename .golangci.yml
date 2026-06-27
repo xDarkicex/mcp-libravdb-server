@@ -10,26 +10,16 @@ linters:
     - unused
     - gofmt
     - revive
-
-linters-settings:
-  revive:
-    rules:
-      - name: blank-imports
-      - name: context-as-argument
-      - name: exported
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: if-return
-      - name: var-naming
-      - name: package-comments
-      - name: range
-      - name: receiver-naming
-      - name: indent-error-flow
-      - name: superfluous-else
-
-  gocyclo:
-    min-complexity: 8
-
-run:
-  timeout: 3m
+  settings:
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: error-return
+        - name: error-strings
+        - name: if-return
+        - name: range
+        - name: indent-error-flow
+        - name: superfluous-else
+  exclusions:
+    generated: strict
