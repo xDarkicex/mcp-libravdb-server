@@ -170,3 +170,148 @@ jobs:
           git add Formula/mcp-memory-libravdb.rb
           git commit -m "mcp-memory-libravdb ${GITHUB_REF_NAME#v}" || exit 0
           git push
+
+  deb:
+    name: build-deb-${{ matrix.arch }}
+    runs-on: ubuntu-24.04
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            artifact: mcp-memory-libravdb-linux-amd64
+          - arch: arm64
+            artifact: mcp-memory-libravdb-linux-arm64
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: mcp-libravdb-server }
+
+      - uses: actions/download-artifact@v4
+        with: { name: "${{ matrix.artifact }}", path: dist }
+
+      - name: Build .deb
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          PKG_NAME=mcp-memory-libravdb
+          DEB_NAME=${PKG_NAME}_${VERSION}_${{ matrix.arch }}.deb
+          BIN_DIR=dist/${PKG_NAME}_${VERSION}_${{ matrix.arch }}/usr/local/bin
+          DEBIAN_DIR=dist/${PKG_NAME}_${VERSION}_${{ matrix.arch }}/DEBIAN
+
+          mkdir -p "${BIN_DIR}" "${DEBIAN_DIR}"
+          cp dist/${{ matrix.artifact }} "${BIN_DIR}/mcp-memory-libravdb"
+          chmod 755 "${BIN_DIR}/mcp-memory-libravdb"
+
+          INSTALLED_SIZE=$(du -sk "dist/${PKG_NAME}_${VERSION}_${{ matrix.arch }}" | cut -f1)
+          cat > "${DEBIAN_DIR}/control" <<CTRL
+      Package: ${PKG_NAME}
+      Version: ${VERSION}
+      Architecture: ${{ matrix.arch }}
+      Maintainer: xDarkicex
+      Installed-Size: ${INSTALLED_SIZE}
+      Section: utils
+      Priority: optional
+      Homepage: https://github.com/xDarkicex/mcp-libravdb-server
+      Description: MCP server for the libravdbd cognitive memory kernel
+       Exposes libravdbd's cognitive memory system to any MCP-compatible AI client.
+      CTRL
+
+          dpkg-deb --build "dist/${PKG_NAME}_${VERSION}_${{ matrix.arch }}" "dist/${DEB_NAME}"
+          shasum -a 256 "dist/${DEB_NAME}" > "dist/${DEB_NAME}.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.arch }}
+          path: |
+            dist/*.deb
+            dist/*.deb.sha256
+
+  apt:
+    name: publish-apt
+    runs-on: ubuntu-24.04
+    needs: deb
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { pattern: "deb-*", path: dist/debs, merge-multiple: true }
+
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+
+      - name: Get GPG key ID
+        id: gpg
+        run: |
+          KEY_ID=$(gpg --list-keys --with-colons 2>/dev/null | grep '^pub' | head -1 | cut -d: -f5)
+          echo "key_id=${KEY_ID}" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v4
+        with:
+          repository: xDarkicex/apt-mcp-libravdb
+          token: ${{ secrets.SIDECAR_REPO_TOKEN }}
+          path: apt-repo
+
+      - name: Export GPG public key
+        working-directory: apt-repo
+        run: |
+          gpg --armor --export "${{ steps.gpg.outputs.key_id }}" > gpg.key
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gpg.key
+          git commit -m "Update GPG public key" || exit 0
+
+      - name: Update apt repository
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          POOL="apt-repo/pool/main/m/mcp-memory-libravdb"
+          mkdir -p "${POOL}"
+
+          # Copy .debs to pool
+          for deb in dist/debs/*.deb; do
+            cp "$deb" "${POOL}/"
+          done
+
+          cd apt-repo
+
+          # Remove old versions of this package
+          rm -f pool/main/m/mcp-memory-libravdb/mcp-memory-libravdb_*_amd64.deb
+          rm -f pool/main/m/mcp-memory-libravdb/mcp-memory-libravdb_*_arm64.deb
+          cp ../dist/debs/*.deb "${POOL}/"
+
+          # Generate Packages files
+          for arch in amd64 arm64; do
+            DEBS=$(find pool -name "*_${arch}.deb" -type f)
+            if [ -n "$DEBS" ]; then
+              mkdir -p "dists/stable/main/binary-${arch}"
+              dpkg-scanpackages --multiversion pool > "dists/stable/main/binary-${arch}/Packages" 2>/dev/null
+              gzip -kf "dists/stable/main/binary-${arch}/Packages"
+            fi
+          done
+
+          # Generate Release file
+          cat > "dists/stable/Release" <<RELEASE
+      Origin: xDarkicex
+      Label: mcp-memory-libravdb
+      Suite: stable
+      Codename: stable
+      Date: $(date -Ru)
+      Architectures: amd64 arm64
+      Components: main
+      Description: MCP server for the libravdbd cognitive memory kernel
+      RELEASE
+
+          # Sign Release
+          gpg --default-key "${{ steps.gpg.outputs.key_id }}" \
+              -abs --no-tty --clearsign \
+              -o "dists/stable/InRelease" "dists/stable/Release"
+          gpg --default-key "${{ steps.gpg.outputs.key_id }}" \
+              -abs --no-tty \
+              -o "dists/stable/Release.gpg" "dists/stable/Release"
+
+          git add -A
+          git diff --staged --quiet || git commit -m "Release mcp-memory-libravdb ${VERSION}"
+          git pull --rebase
+          git push
