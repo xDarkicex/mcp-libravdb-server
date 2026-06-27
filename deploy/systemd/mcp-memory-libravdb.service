@@ -1,0 +1,25 @@
+[Unit]
+Description=libravdb Memory MCP Server
+After=network-online.target libravdbd.service
+Wants=network-online.target libravdbd.service
+
+[Service]
+Type=simple
+User=libravdb
+Group=libravdb
+Environment=LIBRAVDBD_ADDR=unix:///var/run/libravdbd/libravdb.sock
+Environment=LIBRAVDB_TENANT_KEY=libravdb-mcp-server
+Environment=LIBRAVDB_AUTH_SECRET_FILE=/var/lib/libravdbd/auth.secret
+ExecStart=/usr/local/bin/mcp-memory-libravdb http --http-port 8082 --http-host 127.0.0.1
+Restart=on-failure
+RestartSec=2
+StateDirectory=libravdb-mcp
+KillSignal=SIGTERM
+TimeoutStopSec=15
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

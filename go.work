@@ -1,0 +1,9 @@
+go 1.25.7
+
+use (
+	.
+	../nanite
+	../nanite/quic
+	../nanite/sse
+	../libravdb-contracts
+)
