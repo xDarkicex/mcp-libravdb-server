@@ -36,7 +36,7 @@ func fakeServer(t *testing.T) (string, func()) {
 
 	return "unix://" + sock, func() {
 		server.Stop()
-		listener.Close()
+		_ = listener.Close()
 	}
 }
 
@@ -59,8 +59,8 @@ func (f *fakeBackend) Status(ctx context.Context, req *ipcv1.MemoryStatusRequest
 }
 
 func TestNewRuntime_Healthy(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	sock, cleanup := fakeServer(t)
 	defer cleanup()
@@ -90,8 +90,8 @@ func TestNewRuntime_Healthy(t *testing.T) {
 }
 
 func TestNewRuntime_Degraded(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	cfg := &Config{
 		BackendAddr:    "unix:///tmp/nonexistent.sock",
@@ -116,8 +116,8 @@ func TestNewRuntime_Degraded(t *testing.T) {
 }
 
 func TestNewRuntime_BackendDownNoDegrade(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	cfg := &Config{
 		BackendAddr:    "unix:///tmp/nonexistent.sock",
@@ -136,8 +136,8 @@ func TestNewRuntime_BackendDownNoDegrade(t *testing.T) {
 }
 
 func TestRuntime_EndToEnd(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	sock, cleanup := fakeServer(t)
 	defer cleanup()
@@ -179,8 +179,8 @@ func TestRuntime_EndToEnd(t *testing.T) {
 }
 
 func TestRuntime_ToolList(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	sock, cleanup := fakeServer(t)
 	defer cleanup()
@@ -342,8 +342,8 @@ func TestRunStdio_ConfigError(t *testing.T) {
 }
 
 func TestRunHTTP_PortInUse(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	sock, cleanup := fakeServer(t)
 	defer cleanup()
@@ -353,7 +353,7 @@ func TestRunHTTP_PortInUse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 
 	cfg := &Config{
 		BackendAddr:    sock, BackendTLS: false, BackendTimeout: 5 * time.Second,
@@ -383,8 +383,8 @@ func TestRunHTTP_ConfigError(t *testing.T) {
 }
 
 func TestRunStdio_Success(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	sock, cleanup := fakeServer(t)
 	defer cleanup()
@@ -392,7 +392,7 @@ func TestRunStdio_Success(t *testing.T) {
 	oldStdin := os.Stdin
 	r, w, _ := os.Pipe()
 	os.Stdin = r
-	w.Close()
+	_ = w.Close()
 	defer func() { os.Stdin = oldStdin }()
 
 	cfg := &Config{
@@ -487,8 +487,8 @@ func TestShutdown_NilConn(t *testing.T) {
 }
 
 func TestRuntime_ResourcesList(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	sock, cleanup := fakeServer(t)
 	defer cleanup()

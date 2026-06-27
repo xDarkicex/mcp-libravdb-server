@@ -28,12 +28,10 @@ type FakeBackend struct {
 	// Error, when set, causes all RPCs to return this error.
 	Error error
 
-	LastSearch   *ipcv1.SearchTextRequest
-	LastInsert   *ipcv1.InsertTextRequest
-	LastDelete   *ipcv1.DeleteRequest
+	LastSearch *ipcv1.SearchTextRequest
+	LastInsert *ipcv1.InsertTextRequest
+	LastDelete *ipcv1.DeleteRequest
 }
-
-func (f *FakeBackend) err() error { return f.Error }
 
 func (f *FakeBackend) Health(ctx context.Context, req *ipcv1.HealthRequest) (*ipcv1.HealthResponse, error) {
 	return &ipcv1.HealthResponse{Ok: f.HealthOK}, nil

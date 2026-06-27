@@ -23,7 +23,7 @@ func TestParseAddr_Unix(t *testing.T) {
 	}
 	conn, err := dialer(context.Background(), target)
 	if err == nil {
-		conn.Close()
+		_ = conn.Close()
 	}
 }
 
@@ -45,8 +45,8 @@ func TestParseAddr_TCP(t *testing.T) {
 }
 
 func TestResolveAuthSecret_Env(t *testing.T) {
-	os.Setenv("LIBRAVDB_AUTH_SECRET", "test-secret")
-	defer os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Setenv("LIBRAVDB_AUTH_SECRET", "test-secret")
+	t.Cleanup(func() { _ = os.Unsetenv("LIBRAVDB_AUTH_SECRET") })
 
 	secret := resolveAuthSecret()
 	if secret != "test-secret" {
@@ -55,12 +55,12 @@ func TestResolveAuthSecret_Env(t *testing.T) {
 }
 
 func TestResolveAuthSecret_File(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
 
 	tmp := filepath.Join(t.TempDir(), "secret.txt")
-	os.WriteFile(tmp, []byte("file-secret\n"), 0600)
-	os.Setenv("LIBRAVDB_AUTH_SECRET_FILE", tmp)
-	defer os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.WriteFile(tmp, []byte("file-secret\n"), 0600)
+	_ = os.Setenv("LIBRAVDB_AUTH_SECRET_FILE", tmp)
+	t.Cleanup(func() { _ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE") })
 
 	secret := resolveAuthSecret()
 	if secret != "file-secret" {
@@ -69,8 +69,8 @@ func TestResolveAuthSecret_File(t *testing.T) {
 }
 
 func TestResolveAuthSecret_None(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	secret := resolveAuthSecret()
 	if secret != "" {
@@ -97,8 +97,8 @@ func TestTenantKeyInterceptor(t *testing.T) {
 }
 
 func TestHMACAuthInterceptor(t *testing.T) {
-	os.Setenv("LIBRAVDB_AUTH_SECRET", "test-secret")
-	defer os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Setenv("LIBRAVDB_AUTH_SECRET", "test-secret")
+	t.Cleanup(func() { _ = os.Unsetenv("LIBRAVDB_AUTH_SECRET") })
 
 	interceptor := hmacAuthInterceptor("test-secret")
 	err := interceptor(context.Background(), "/test.Method", nil, nil, nil,
@@ -121,8 +121,8 @@ func TestHMACAuthInterceptor(t *testing.T) {
 }
 
 func TestDial_Bufconn(t *testing.T) {
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
-	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET")
+	_ = os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")
 
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
@@ -144,7 +144,7 @@ func TestDial_Bufconn(t *testing.T) {
 	if client == nil {
 		t.Fatal("expected non-nil client")
 	}
-	conn.Close()
+	_ = conn.Close()
 }
 
 func TestDial_TLSNotImplemented(t *testing.T) {
