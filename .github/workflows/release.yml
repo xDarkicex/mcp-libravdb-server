@@ -156,7 +156,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          repository: xDarkicex/homebrew-openclaw-libravdb-memory
+          repository: xDarkicex/homebrew-mcp-libravdb
           token: ${{ secrets.SIDECAR_REPO_TOKEN }}
           path: tap
 
