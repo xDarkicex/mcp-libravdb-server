@@ -8,7 +8,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/xDarkicex/MCP-memory-libravdb/internal/testutil"
+	"github.com/xDarkicex/mcp-libravdb-server/internal/testutil"
 	ipcv1 "github.com/xDarkicex/libravdb-contracts/libravdb/ipc/v1"
 )
 

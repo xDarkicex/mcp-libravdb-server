@@ -1,4 +1,4 @@
-module github.com/xDarkicex/MCP-memory-libravdb
+module github.com/xDarkicex/mcp-libravdb-server
 
 go 1.25.7
 

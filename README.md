@@ -21,12 +21,12 @@ claude mcp add libravdb-memory -- mcp-memory-libravdb stdio
 
 **Go install:**
 ```bash
-go install github.com/xDarkicex/MCP-memory-libravdb/cmd/mcp-memory-libravdb@latest
+go install github.com/xDarkicex/mcp-libravdb-server/cmd/mcp-memory-libravdb@latest
 ```
 
 **Binary:**
 ```bash
-git clone https://github.com/xDarkicex/MCP-memory-libravdb
+git clone https://github.com/xDarkicex/mcp-libravdb-server
 cd MCP-memory-libravdb
 make build
 ./bin/mcp-memory-libravdb --version

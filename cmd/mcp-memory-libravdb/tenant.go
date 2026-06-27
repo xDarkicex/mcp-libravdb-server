@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/xDarkicex/pidpeek"
 
-	"github.com/xDarkicex/MCP-memory-libravdb/internal/grpc"
+	"github.com/xDarkicex/mcp-libravdb-server/internal/grpc"
 	ipcv1 "github.com/xDarkicex/libravdb-contracts/libravdb/ipc/v1"
 )
 

@@ -15,10 +15,10 @@ import (
 	"github.com/xDarkicex/nanite"
 	nanitesse "github.com/xDarkicex/nanite/sse"
 
-	"github.com/xDarkicex/MCP-memory-libravdb/internal/grpc"
-	"github.com/xDarkicex/MCP-memory-libravdb/internal/resources"
-	"github.com/xDarkicex/MCP-memory-libravdb/internal/tools"
-	"github.com/xDarkicex/MCP-memory-libravdb/internal/transport"
+	"github.com/xDarkicex/mcp-libravdb-server/internal/grpc"
+	"github.com/xDarkicex/mcp-libravdb-server/internal/resources"
+	"github.com/xDarkicex/mcp-libravdb-server/internal/tools"
+	"github.com/xDarkicex/mcp-libravdb-server/internal/transport"
 	ipcv1 "github.com/xDarkicex/libravdb-contracts/libravdb/ipc/v1"
 )
 

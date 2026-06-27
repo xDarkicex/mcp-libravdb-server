@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/xDarkicex/MCP-memory-libravdb/internal/app"
+	"github.com/xDarkicex/mcp-libravdb-server/internal/app"
 )
 
 var (
