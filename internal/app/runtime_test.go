@@ -481,6 +481,11 @@ func TestSetupRouter_AllRoutes(t *testing.T) {
 	}
 }
 
+func TestShutdown_NilConn(t *testing.T) {
+	rt := &Runtime{gRPCConn: nil, Logger: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	rt.Shutdown()
+}
+
 func TestRuntime_ResourcesList(t *testing.T) {
 	os.Unsetenv("LIBRAVDB_AUTH_SECRET")
 	os.Unsetenv("LIBRAVDB_AUTH_SECRET_FILE")

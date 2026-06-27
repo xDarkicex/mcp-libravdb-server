@@ -73,6 +73,32 @@ func TestResourcesRead(t *testing.T) {
 	}
 }
 
+func TestResourceTemplatesList(t *testing.T) {
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.0.0"}, &mcp.ServerOptions{
+		HasResources: true,
+	})
+	RegisterAll(server)
+
+	clientTrans, serverTrans := mcp.NewInMemoryTransports()
+	go func() { _, _ = server.Connect(t.Context(), serverTrans, nil) }()
+
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.0.0"}, nil)
+	session, err := client.Connect(t.Context(), clientTrans, nil)
+	if err != nil {
+		t.Fatalf("connect: %v", err)
+	}
+	defer func() { _ = session.Close() }()
+
+	templates, err := session.ListResourceTemplates(t.Context(), nil)
+	if err != nil {
+		t.Fatalf("list templates: %v", err)
+	}
+	// Should return empty list for Cline compatibility
+	if templates == nil {
+		t.Fatal("expected non-nil template list")
+	}
+}
+
 func TestResourcesRead_NotFound(t *testing.T) {
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.0.0"}, &mcp.ServerOptions{
 		HasResources: true,

@@ -61,6 +61,24 @@ func TestRecall_BackendError(t *testing.T) {
 	assert.True(t, result.IsError)
 }
 
+func TestKindMatches_InvalidJSON(t *testing.T) {
+	if kindMatches([]byte("not json"), "decision") {
+		t.Fatal("invalid JSON should not match")
+	}
+}
+
+func TestKindMatches_EmptyKind(t *testing.T) {
+	if !kindMatches(nil, "") {
+		t.Fatal("empty kind should match everything")
+	}
+}
+
+func TestKindMatches_WrongKind(t *testing.T) {
+	if kindMatches([]byte(`{"memory_kind":"fact"}`), "decision") {
+		t.Fatal("wrong kind should not match")
+	}
+}
+
 func TestRecall_Degraded(t *testing.T) {
 	_, _, cleanup := setupTest(t)
 	defer cleanup()
