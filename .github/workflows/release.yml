@@ -120,6 +120,7 @@ jobs:
           mkdir -p tap/Formula
           cp dist/mcp-memory-libravdb.rb tap/Formula/mcp-memory-libravdb.rb
           cd tap
+          git remote set-url origin "https://x-access-token:${{ secrets.SIDECAR_REPO_TOKEN }}@github.com/xDarkicex/homebrew-mcp-libravdb.git"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/mcp-memory-libravdb.rb
@@ -188,11 +189,13 @@ jobs:
       - name: Export GPG public key
         working-directory: apt-repo
         run: |
+          git remote set-url origin "https://x-access-token:${{ secrets.SIDECAR_REPO_TOKEN }}@github.com/xDarkicex/apt-mcp-libravdb.git"
           gpg --armor --export "${{ steps.gpg.outputs.key_id }}" > gpg.key
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add gpg.key
           git commit -m "Update GPG public key" || exit 0
+          git push origin main
 
       - name: Update apt repository
         run: |
@@ -206,6 +209,7 @@ jobs:
           done
 
           cd apt-repo
+          git remote set-url origin "https://x-access-token:${{ secrets.SIDECAR_REPO_TOKEN }}@github.com/xDarkicex/apt-mcp-libravdb.git"
 
           # Remove old versions of this package
           rm -f pool/main/m/mcp-memory-libravdb/mcp-memory-libravdb_*_amd64.deb
