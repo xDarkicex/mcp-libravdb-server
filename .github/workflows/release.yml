@@ -104,50 +104,9 @@ jobs:
         with: { path: dist, merge-multiple: true }
 
       - name: Generate formula
-        working-directory: mcp-libravdb-server
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
-
-          DARWIN_ARM_SHA=$(shasum -a 256 ../dist/mcp-memory-libravdb-darwin-arm64 | awk '{print $1}')
-          DARWIN_AMD_SHA=$(shasum -a 256 ../dist/mcp-memory-libravdb-darwin-amd64 | awk '{print $1}')
-          LINUX_AMD_SHA=$(shasum -a 256 ../dist/mcp-memory-libravdb-linux-amd64 | awk '{print $1}')
-          LINUX_ARM_SHA=$(shasum -a 256 ../dist/mcp-memory-libravdb-linux-arm64 | awk '{print $1}')
-
-          cat > ../dist/mcp-memory-libravdb.rb <<RUBY
-      class McpMemoryLibravdb < Formula
-        desc "MCP server for the libravdbd cognitive memory kernel"
-        homepage "https://github.com/xDarkicex/mcp-libravdb-server"
-        version "${VERSION}"
-
-        on_macos do
-          if Hardware::CPU.arm?
-            url "https://github.com/xDarkicex/mcp-libravdb-server/releases/download/v${VERSION}/mcp-memory-libravdb-darwin-arm64"
-            sha256 "${DARWIN_ARM_SHA}"
-          else
-            url "https://github.com/xDarkicex/mcp-libravdb-server/releases/download/v${VERSION}/mcp-memory-libravdb-darwin-amd64"
-            sha256 "${DARWIN_AMD_SHA}"
-          end
-        end
-
-        on_linux do
-          if Hardware::CPU.arm?
-            url "https://github.com/xDarkicex/mcp-libravdb-server/releases/download/v${VERSION}/mcp-memory-libravdb-linux-arm64"
-            sha256 "${LINUX_ARM_SHA}"
-          else
-            url "https://github.com/xDarkicex/mcp-libravdb-server/releases/download/v${VERSION}/mcp-memory-libravdb-linux-amd64"
-            sha256 "${LINUX_AMD_SHA}"
-          end
-        end
-
-        def install
-          bin.install Dir["*"].first => "mcp-memory-libravdb"
-        end
-
-        test do
-          system "#{bin}/mcp-memory-libravdb", "--version"
-        end
-      end
-      RUBY
+          chmod +x mcp-libravdb-server/packaging/homebrew/generate-formula.sh
+          mcp-libravdb-server/packaging/homebrew/generate-formula.sh "${GITHUB_REF_NAME#v}" dist dist/mcp-memory-libravdb.rb
 
       - uses: actions/upload-artifact@v4
         with:
@@ -193,32 +152,8 @@ jobs:
 
       - name: Build .deb
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
-          PKG_NAME=mcp-memory-libravdb
-          DEB_NAME=${PKG_NAME}_${VERSION}_${{ matrix.arch }}.deb
-          BIN_DIR=dist/${PKG_NAME}_${VERSION}_${{ matrix.arch }}/usr/local/bin
-          DEBIAN_DIR=dist/${PKG_NAME}_${VERSION}_${{ matrix.arch }}/DEBIAN
-
-          mkdir -p "${BIN_DIR}" "${DEBIAN_DIR}"
-          cp dist/${{ matrix.artifact }} "${BIN_DIR}/mcp-memory-libravdb"
-          chmod 755 "${BIN_DIR}/mcp-memory-libravdb"
-
-          INSTALLED_SIZE=$(du -sk "dist/${PKG_NAME}_${VERSION}_${{ matrix.arch }}" | cut -f1)
-          cat > "${DEBIAN_DIR}/control" <<CTRL
-      Package: ${PKG_NAME}
-      Version: ${VERSION}
-      Architecture: ${{ matrix.arch }}
-      Maintainer: xDarkicex
-      Installed-Size: ${INSTALLED_SIZE}
-      Section: utils
-      Priority: optional
-      Homepage: https://github.com/xDarkicex/mcp-libravdb-server
-      Description: MCP server for the libravdbd cognitive memory kernel
-       Exposes libravdbd's cognitive memory system to any MCP-compatible AI client.
-      CTRL
-
-          dpkg-deb --build "dist/${PKG_NAME}_${VERSION}_${{ matrix.arch }}" "dist/${DEB_NAME}"
-          shasum -a 256 "dist/${DEB_NAME}" > "dist/${DEB_NAME}.sha256"
+          chmod +x mcp-libravdb-server/packaging/linux/build-deb.sh
+          mcp-libravdb-server/packaging/linux/build-deb.sh "${GITHUB_REF_NAME#v}" "${{ matrix.arch }}" "dist/${{ matrix.artifact }}" dist
 
       - uses: actions/upload-artifact@v4
         with:
@@ -292,16 +227,7 @@ jobs:
           done
 
           # Generate Release file
-          cat > "dists/stable/Release" <<RELEASE
-      Origin: xDarkicex
-      Label: mcp-memory-libravdb
-      Suite: stable
-      Codename: stable
-      Date: $(date -Ru)
-      Architectures: amd64 arm64
-      Components: main
-      Description: MCP server for the libravdbd cognitive memory kernel
-      RELEASE
+          printf 'Origin: xDarkicex\nLabel: mcp-memory-libravdb\nSuite: stable\nCodename: stable\nDate: %s\nArchitectures: amd64 arm64\nComponents: main\nDescription: MCP server for the libravdbd cognitive memory kernel\n' "$(date -Ru)" > "dists/stable/Release"
 
           # Sign Release
           gpg --default-key "${{ steps.gpg.outputs.key_id }}" \
