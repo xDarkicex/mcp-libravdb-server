@@ -15,23 +15,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14
-            goos: darwin
+          - goos: darwin
             goarch: arm64
             asset_name: mcp-memory-libravdb-darwin-arm64
-          - runner: macos-13
-            goos: darwin
+          - goos: darwin
             goarch: amd64
             asset_name: mcp-memory-libravdb-darwin-amd64
-          - runner: ubuntu-24.04
-            goos: linux
+          - goos: linux
             goarch: amd64
             asset_name: mcp-memory-libravdb-linux-amd64
-          - runner: ubuntu-24.04-arm
-            goos: linux
+          - goos: linux
             goarch: arm64
             asset_name: mcp-memory-libravdb-linux-arm64
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
