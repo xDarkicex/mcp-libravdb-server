@@ -40,12 +40,24 @@ claude mcp add libravdb-memory -- mcp-memory-libravdb stdio
 
 ## Install
 
+**macOS (Homebrew):**
+```bash
+brew install xDarkicex/homebrew-mcp-libravdb/mcp-memory-libravdb
+```
+
+**Linux (APT):**
+```bash
+curl -fsSL https://xDarkicex.github.io/apt-mcp-libravdb/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/mcp-libravdb.gpg
+echo "deb [signed-by=/usr/share/keyrings/mcp-libravdb.gpg] https://xDarkicex.github.io/apt-mcp-libravdb stable main" | sudo tee /etc/apt/sources.list.d/mcp-libravdb.list
+sudo apt update && sudo apt install mcp-memory-libravdb
+```
+
+**Go install:**
 ```bash
 go install github.com/xDarkicex/mcp-libravdb-server/cmd/mcp-memory-libravdb@latest
 ```
 
-Or build from source:
-
+**Build from source:**
 ```bash
 git clone https://github.com/xDarkicex/mcp-libravdb-server
 cd mcp-libravdb-server
@@ -53,8 +65,7 @@ make build
 ./bin/mcp-memory-libravdb --version
 ```
 
-Docker:
-
+**Docker:**
 ```bash
 docker build -t mcp-memory-libravdb .
 docker run mcp-memory-libravdb --version
