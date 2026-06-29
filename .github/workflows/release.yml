@@ -222,14 +222,10 @@ jobs:
 
           # Sign Release
           gpg --default-key "${{ steps.gpg.outputs.key_id }}" \
-              --batch --pinentry-mode loopback \
-              --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
-              -abs --clearsign \
+              --batch -abs --clearsign \
               -o "dists/stable/InRelease" "dists/stable/Release"
           gpg --default-key "${{ steps.gpg.outputs.key_id }}" \
-              --batch --pinentry-mode loopback \
-              --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
-              -abs \
+              --batch -abs \
               -o "dists/stable/Release.gpg" "dists/stable/Release"
 
           git add -A
