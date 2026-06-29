@@ -220,7 +220,8 @@ jobs:
           # Generate Release file
           printf 'Origin: xDarkicex\nLabel: mcp-memory-libravdb\nSuite: stable\nCodename: stable\nDate: %s\nArchitectures: amd64 arm64\nComponents: main\nDescription: MCP server for the libravdbd cognitive memory kernel\n' "$(date -Ru)" > "dists/stable/Release"
 
-          # Sign Release
+          # Sign Release (remove stale signatures first)
+          rm -f "dists/stable/InRelease" "dists/stable/Release.gpg"
           gpg --default-key "${{ steps.gpg.outputs.key_id }}" \
               --batch -abs --clearsign \
               -o "dists/stable/InRelease" "dists/stable/Release"
