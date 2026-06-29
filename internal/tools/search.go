@@ -49,7 +49,7 @@ func registerSearch(server *mcp.Server, deps *Deps) {
 		}
 
 		return &mcp.CallToolResult{
-			StructuredContent: results,
+			StructuredContent: SearchResponse{Results: results},
 		}, nil, nil
 	})
 }

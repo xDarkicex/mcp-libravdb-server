@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "libravdb-memory": {
+      "type": "stdio",
+      "command": "/Users/z3robit/Development/golang/src/github.com/xDarkiceX/MCP-memory-libravdb/bin/mcp-memory-libravdb",
+      "args": ["stdio", "--backend-addr", "unix:///opt/homebrew/var/libravdbd/run/libravdb.sock", "--tenant-key", "libravdb-mcp-server", "--log-level", "error"]
+    }
+  }
+}

@@ -14,6 +14,10 @@ func backendUnavailable() *mcp.CallToolResult {
 // All output types are passed directly to CallToolResult.StructuredContent.
 // The MCP SDK handles serialization — we never call json.Marshal on the hot path.
 
+type SearchResponse struct {
+	Results []SearchResult `json:"results"`
+}
+
 type SearchResult struct {
 	ID      string  `json:"id"`
 	Score   float64 `json:"score"`
@@ -44,6 +48,10 @@ type GatingScores struct {
 	DTech float64 `json:"dtech"`
 	GConv float64 `json:"gconv"`
 	GTech float64 `json:"gtech"`
+}
+
+type RecallResponse struct {
+	Results []RecallResult `json:"results"`
 }
 
 type RecallResult struct {

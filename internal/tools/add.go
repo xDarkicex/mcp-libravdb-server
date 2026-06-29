@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -9,9 +10,10 @@ import (
 )
 
 type AddArgs struct {
-	Collection string `json:"collection" jsonschema:"collection to add the memory to"`
-	Text       string `json:"text" jsonschema:"memory content text"`
-	ID         string `json:"id,omitempty" jsonschema:"optional memory ID (auto-generated UUID if omitted)"`
+	Collection string         `json:"collection" jsonschema:"collection to add the memory to"`
+	Text       string         `json:"text" jsonschema:"memory content text"`
+	ID         string         `json:"id,omitempty" jsonschema:"optional memory ID (auto-generated UUID if omitted)"`
+	Metadata   map[string]any `json:"metadata,omitempty" jsonschema:"optional metadata for the memory envelope (e.g. agent, model, source)"`
 }
 
 func registerAdd(server *mcp.Server, deps *Deps) {
@@ -28,13 +30,19 @@ func registerAdd(server *mcp.Server, deps *Deps) {
 			id = uuid.New().String()
 		}
 
+		var metadataJSON []byte
+		if in.Metadata != nil {
+			metadataJSON, _ = json.Marshal(in.Metadata)
+		}
+
 		ctx, cancel := context.WithTimeout(ctx, deps.BackendTimeout)
 		defer cancel()
 
 		resp, err := deps.Client.InsertText(ctx, &ipcv1.InsertTextRequest{
-			Collection: in.Collection,
-			Id:         id,
-			Text:       in.Text,
+			Collection:   in.Collection,
+			Id:           id,
+			Text:         in.Text,
+			MetadataJson: metadataJSON,
 		})
 		if err != nil {
 			deps.Logger.Error("memory.add failed", "collection", in.Collection, "err", err)

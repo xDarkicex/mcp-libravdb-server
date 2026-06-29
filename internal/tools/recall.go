@@ -37,7 +37,7 @@ func registerRecall(server *mcp.Server, deps *Deps) {
 		}
 
 		return &mcp.CallToolResult{
-			StructuredContent: results,
+			StructuredContent: RecallResponse{Results: results},
 		}, nil, nil
 	})
 }
